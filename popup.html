@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Meesho Tools</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="card">
+
+  <header class="app-header">
+    <h1>Meesho Tools</h1>
+  </header>
+
+  <div class="tabs">
+    <button type="button" class="tab-btn active" data-tab="autofill">Autofill</button>
+    <button type="button" class="tab-btn" data-tab="shipping">Shipping</button>
+  </div>
+
+  <div id="panel-autofill" class="tab-panel active">
+
+    <section class="section">
+      <label for="profileSelect">Profile</label>
+      <select id="profileSelect">
+        <option disabled selected>Choose a profile</option>
+      </select>
+      <div class="btn-row">
+        <button id="btnNewProfile" class="btn-ghost">New</button>
+        <button id="btnEditProfile" class="btn-ghost">Rename</button>
+        <button id="btnDeleteProfile" class="btn-ghost btn-danger">Delete</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <label>Actions</label>
+      <button id="btnCapture" class="btn btn-outline">
+        <span class="btn-icon">◎</span> Capture Fields
+      </button>
+      <button id="btnAutoScan" class="btn btn-outline">
+        <span class="btn-icon">⌕</span> Auto Scan Fields
+      </button>
+      <button id="btnAutofill" class="btn btn-primary">
+        <span class="btn-icon">⚡</span> Autofill Data
+      </button>
+    </section>
+
+    <section class="section" id="fieldsSection">
+      <div class="fields-header">
+        <label style="margin:0">Captured Fields (<span id="fieldsCount">0</span>)</label>
+        <button id="btnToggleFields" class="btn-ghost" style="flex:0 0 auto;padding:4px 10px">View</button>
+      </div>
+      <div id="notFoundBanner" class="not-found-banner" hidden>
+        <div class="not-found-title">⚠ Not found on last Autofill</div>
+        <div id="notFoundList" class="not-found-list"></div>
+        <button id="btnCaptureMissing" class="btn-ghost" style="margin-top:6px">Capture Missing on Page</button>
+      </div>
+      <div id="fieldsList" class="fields-list" hidden></div>
+    </section>
+
+    <section class="section">
+      <label>Backup</label>
+      <div class="btn-row">
+        <button id="btnExport" class="btn-ghost">Export</button>
+        <button id="btnImport" class="btn-ghost">Import</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" hidden>
+    </section>
+
+  </div>
+
+  <div id="panel-shipping" class="tab-panel">
+
+    <div class="status status-row">
+      <span class="status-dot" id="statusDot"></span><span id="statusLabel">Ready</span>
+    </div>
+
+    <section class="section">
+      <label>Product Image</label>
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-text">Click to upload <strong>PNG / JPG</strong></div>
+      </div>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg">
+
+      <div class="preview-wrap" id="previewWrap">
+        <img id="previewImg" src="" alt="preview">
+        <div class="preview-info">
+          <div class="preview-name" id="previewName">image.jpg</div>
+          <div class="preview-size" id="previewSize">--</div>
+        </div>
+        <button class="btn-ghost change-btn" style="flex:0 0 auto;padding:6px 10px">Change</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <label>Target Shipping</label>
+      <div class="target-row">
+        <div class="target-field">
+          <label>Minimum ₹</label>
+          <input type="number" id="minShipping" min="0" step="1" placeholder="40">
+        </div>
+        <div class="target-field">
+          <label>Maximum ₹ (optional)</label>
+          <input type="number" id="maxShipping" min="0" step="1" placeholder="50">
+        </div>
+      </div>
+      <div class="hint">Background, border, size, emoji and badge variations are generated and tested automatically until one lands in range.</div>
+    </section>
+
+    <section class="section">
+      <label>Actions</label>
+      <button id="generateBtn" class="btn btn-primary" disabled>
+        <span class="btn-icon">⚡</span> Generate &amp; Test
+      </button>
+      <button id="stopBtn" class="btn btn-stop">
+        <span class="btn-icon">◼</span> Stop Testing
+      </button>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label">
+          <span id="progressText">Processing...</span>
+          <span id="progressCount">0 / 0</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+
+      <div class="status-msg" id="statusMsg"></div>
+    </section>
+
+    <section class="results-section" id="resultsSection">
+      <div class="divider"></div>
+      <div class="results-header">
+        <label style="margin:0">Result</label>
+        <div class="badge">Target Match</div>
+      </div>
+      <div id="resultsGrid"></div>
+    </section>
+
+  </div>
+
+</div>
+<script src="popup-autofill.js"></script>
+<script src="popup-shipping.js"></script>
+<script src="tabs.js"></script>
+</body>
+</html>
