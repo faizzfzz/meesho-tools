@@ -145,7 +145,14 @@ let committed = false
 const commit = async () => {
 if(committed) return
 committed = true
-profiles[id].fields[index].value = input.value
+let newValue = input.value
+if(field.type === "number"){
+// type="number" inputs on Meesho's page silently blank themselves if written
+// with anything but a bare numeric string (commas, currency symbols, spaces
+// all get rejected) - strip that here so a hand-edited value can't break Autofill.
+newValue = newValue.trim().replace(/[^0-9.\-+eE]/g, "")
+}
+profiles[id].fields[index].value = newValue
 await saveProfiles()
 renderFieldsList()
 }
