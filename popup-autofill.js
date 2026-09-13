@@ -397,16 +397,27 @@ notFoundBanner.hidden = true
 
 }
 
-/* EXPORT */
+/* EXPORT (selected profile only) */
 
 btnExport.onclick = () => {
 
-if(Object.keys(profiles).length === 0){
-alert("No profiles to export")
+const id = profileSelect.value
+
+if(!id){
+alert("Select a profile first")
 return
 }
 
-const data = JSON.stringify(profiles,null,2)
+const profile = profiles[id]
+
+if(!profile || !profile.fields || profile.fields.length === 0){
+alert("This profile has no fields to export")
+return
+}
+
+const payload = { [id]: profile }
+
+const data = JSON.stringify(payload,null,2)
 
 const blob = new Blob([data],{type:"application/json"})
 
@@ -414,8 +425,10 @@ const url = URL.createObjectURL(blob)
 
 const a = document.createElement("a")
 
+const safeName = (profile.name || "profile").replace(/[^a-z0-9_-]+/gi,"_")
+
 a.href = url
-a.download = "meesho_autofill_profiles_" + Date.now() + ".json"
+a.download = "meesho_autofill_" + safeName + "_" + Date.now() + ".json"
 
 document.body.appendChild(a)
 
@@ -427,7 +440,7 @@ URL.revokeObjectURL(url)
 
 }
 
-/* IMPORT */
+/* IMPORT (accepts a single-profile export, a multi-profile export, or a bare {name,fields} object) */
 
 btnImport.onclick = () => {
 
@@ -435,9 +448,15 @@ importFile.click()
 
 }
 
+function isProfileShape(p){
+return !!p && typeof p === "object" && typeof p.name === "string" && Array.isArray(p.fields)
+}
+
 importFile.addEventListener("change", (e)=>{
 
 const file = e.target.files[0]
+
+e.target.value = ""
 
 if(!file) return
 
@@ -449,11 +468,18 @@ try{
 
 const imported = JSON.parse(event.target.result)
 
+if(isProfileShape(imported)){
+const id = "profile_" + Date.now()
+profiles[id] = imported
+}else if(imported && typeof imported === "object" && !Array.isArray(imported) && Object.keys(imported).length > 0 && Object.values(imported).every(isProfileShape)){
 Object.assign(profiles, imported)
+}else{
+throw new Error("Unrecognized file format")
+}
 
 await chrome.storage.local.set({profiles})
 
-alert("Profiles imported successfully")
+alert("Profile imported successfully")
 
 loadProfiles()
 
