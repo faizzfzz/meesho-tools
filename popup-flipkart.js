@@ -63,7 +63,14 @@ renderNotFoundReport()
 /* CAPTURED FIELDS VIEW */
 
 function labelForField(field){
+if(field.tab && field.label){
+return `${field.tab} › ${field.label}`
+}
 const selector = field.selector || ""
+// A not-found report entry from the wizard already carries a readable "Tab › Label"
+// string in place of a real selector - show it as-is instead of running it through
+// the generic-selector truncation below, which would cut off the label half.
+if(selector.includes(" › ")) return selector
 const m = selector.match(/id=["']([^"']+)["']/) || selector.match(/#([a-zA-Z0-9_-]+)/)
 if(m) return m[1]
 if(selector.startsWith("SIZE:")){
@@ -71,6 +78,10 @@ const sm = selector.match(/^SIZE:(.+?)::/)
 if(sm) return `Size "${sm[1]}"`
 }
 return selector.length > 36 ? selector.slice(0,33) + "..." : selector
+}
+
+function displayValue(value){
+return Array.isArray(value) ? value.join(", ") : value
 }
 
 function renderFieldsList(){
@@ -104,8 +115,8 @@ typeEl.textContent = labelForField(field)
 
 const valueEl = document.createElement("div")
 valueEl.className = "field-value"
-valueEl.textContent = field.value
-valueEl.title = "Click to edit"
+valueEl.textContent = displayValue(field.value)
+valueEl.title = Array.isArray(field.value) ? "Click to edit (comma-separated)" : "Click to edit"
 valueEl.onclick = () => editFieldValue(id, index, valueEl)
 
 main.appendChild(typeEl)
@@ -133,10 +144,13 @@ fieldsListEl.appendChild(row)
 function editFieldValue(id, index, valueEl){
 
 const field = profiles[id].fields[index]
+const wasArray = Array.isArray(field.value)
+const kind = field.kind || field.type
 
 const input = document.createElement("input")
 input.className = "field-value-input"
-input.value = field.value
+input.value = displayValue(field.value)
+if(wasArray) input.title = "Comma-separated list"
 
 valueEl.replaceWith(input)
 input.focus()
@@ -148,7 +162,9 @@ const commit = async () => {
 if(committed) return
 committed = true
 let newValue = input.value
-if(field.type === "number"){
+if(wasArray){
+newValue = newValue.split(",").map(v => v.trim()).filter(Boolean)
+}else if(kind === "number"){
 // type="number" inputs silently blank themselves if written with anything but
 // a bare numeric string (commas, currency symbols, spaces all get rejected) -
 // strip that here so a hand-edited value can't break Autofill.
@@ -188,7 +204,7 @@ return
 notFoundListEl.innerHTML = ""
 report.notFound.forEach(field => {
 const row = document.createElement("div")
-row.textContent = "• " + labelForField(field) + " (" + field.value + ")"
+row.textContent = "• " + labelForField(field) + " (" + displayValue(field.value) + ")"
 notFoundListEl.appendChild(row)
 })
 

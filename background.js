@@ -2,6 +2,16 @@
 // `store` selects which top-level storage key holds the profiles - Meesho's
 // popup omits it (defaults to "profiles"), Flipkart's popup passes
 // "flipkartProfiles", so the two marketplaces never share/clobber profiles.
+// A field is identified either by its CSS selector (Meesho, and Flipkart's plain
+// "Edit Listing" drawer fields) or by its wizard tab+label (Flipkart's tab-based
+// "Add a Single Listing" wizard, which has no stable id/name/selector to key on -
+// see flipkart-content.js for why).
+function fieldKey(field){
+  if(field.selector) return "sel::"+field.selector
+  if(field.tab!==undefined&&field.label!==undefined) return "lbl::"+field.tab+"::"+field.label
+  return null
+}
+
 async function handleSaveField(e){
   try{
     const {profileId,field,store}=e
@@ -12,8 +22,9 @@ async function handleSaveField(e){
 
     if(!data[profileId]) return false
 
+    const key=fieldKey(field)
     const index=data[profileId].fields.findIndex(
-      x=>x.selector===field.selector
+      x=>fieldKey(x)===key
     )
 
     if(index>-1){
