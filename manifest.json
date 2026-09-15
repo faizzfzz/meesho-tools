@@ -2,14 +2,15 @@
   "manifest_version": 3,
   "name": "Meesho Tools",
   "version": "1.0.0",
-  "description": "Meesho Autofill + Shipping Optimizer, combined into one tabbed extension.",
+  "description": "Meesho Autofill + Shipping Optimizer, and Flipkart Autofill, combined into one tabbed extension.",
   "permissions": [
     "storage",
     "activeTab",
     "scripting"
   ],
   "host_permissions": [
-    "*://supplier.meesho.com/*"
+    "*://supplier.meesho.com/*",
+    "*://seller.flipkart.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -32,6 +33,16 @@
         "selector-utils.js",
         "autofill-content.js",
         "shipping-content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://seller.flipkart.com/*"
+      ],
+      "js": [
+        "selector-utils.js",
+        "flipkart-content.js"
       ],
       "run_at": "document_idle"
     }

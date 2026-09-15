@@ -13,135 +13,204 @@
     <h1>Meesho Tools</h1>
   </header>
 
-  <div class="tabs">
-    <button type="button" class="tab-btn active" data-tab="autofill">Autofill</button>
-    <button type="button" class="tab-btn" data-tab="shipping">Shipping</button>
-  </div>
-
-  <div id="panel-autofill" class="tab-panel active">
-
-    <section class="section">
-      <label for="profileSelect">Profile</label>
-      <select id="profileSelect">
-        <option disabled selected>Choose a profile</option>
-      </select>
-      <div class="btn-row">
-        <button id="btnNewProfile" class="btn-ghost">New</button>
-        <button id="btnEditProfile" class="btn-ghost">Rename</button>
-        <button id="btnDeleteProfile" class="btn-ghost btn-danger">Delete</button>
-      </div>
-    </section>
-
-    <section class="section">
-      <label>Actions</label>
-      <button id="btnCapture" class="btn btn-outline">
-        <span class="btn-icon">◎</span> Capture Fields
-      </button>
-      <button id="btnAutoScan" class="btn btn-outline">
-        <span class="btn-icon">⌕</span> Auto Scan Fields
-      </button>
-      <button id="btnAutofill" class="btn btn-primary">
-        <span class="btn-icon">⚡</span> Autofill Data
-      </button>
-    </section>
-
-    <section class="section" id="fieldsSection">
-      <div class="fields-header">
-        <label style="margin:0">Captured Fields (<span id="fieldsCount">0</span>)</label>
-        <button id="btnToggleFields" class="btn-ghost" style="flex:0 0 auto;padding:4px 10px">View</button>
-      </div>
-      <div id="notFoundBanner" class="not-found-banner" hidden>
-        <div class="not-found-title">⚠ Not found on last Autofill</div>
-        <div id="notFoundList" class="not-found-list"></div>
-        <button id="btnCaptureMissing" class="btn-ghost" style="margin-top:6px">Capture Missing on Page</button>
-      </div>
-      <div id="fieldsList" class="fields-list" hidden></div>
-    </section>
-
-    <section class="section">
-      <label>Backup</label>
-      <div class="btn-row">
-        <button id="btnExport" class="btn-ghost">Export</button>
-        <button id="btnImport" class="btn-ghost">Import</button>
-      </div>
-      <div class="hint">Export downloads only the profile selected above. Import adds/overwrites that profile from a file (also accepts an older all-profiles export).</div>
-      <input type="file" id="importFile" accept=".json" hidden>
-    </section>
-
-  </div>
-
-  <div id="panel-shipping" class="tab-panel">
-
-    <div class="status status-row">
-      <span class="status-dot" id="statusDot"></span><span id="statusLabel">Ready</span>
+  <div class="tab-group" id="group-marketplace">
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="meesho">Meesho</button>
+      <button type="button" class="tab-btn" data-tab="flipkart">Flipkart</button>
     </div>
 
-    <section class="section">
-      <label>Product Image</label>
-      <div class="upload-area" id="uploadArea">
-        <div class="upload-text">Click to upload <strong>PNG / JPG</strong></div>
-      </div>
-      <input type="file" id="fileInput" accept="image/png,image/jpeg">
+    <div class="tab-panel active" data-panel="meesho">
 
-      <div class="preview-wrap" id="previewWrap">
-        <img id="previewImg" src="" alt="preview">
-        <div class="preview-info">
-          <div class="preview-name" id="previewName">image.jpg</div>
-          <div class="preview-size" id="previewSize">--</div>
+      <div class="tab-group" id="group-meesho-tool">
+        <div class="tabs">
+          <button type="button" class="tab-btn active" data-tab="autofill">Autofill</button>
+          <button type="button" class="tab-btn" data-tab="shipping">Shipping</button>
         </div>
-        <button class="btn-ghost change-btn" style="flex:0 0 auto;padding:6px 10px">Change</button>
-      </div>
-    </section>
 
-    <section class="section">
-      <label>Target Shipping</label>
-      <div class="target-row">
-        <div class="target-field">
-          <label>Minimum ₹</label>
-          <input type="number" id="minShipping" min="0" step="1" placeholder="40">
+        <div id="panel-autofill" class="tab-panel active" data-panel="autofill">
+
+          <section class="section">
+            <label for="profileSelect">Profile</label>
+            <select id="profileSelect">
+              <option disabled selected>Choose a profile</option>
+            </select>
+            <div class="btn-row">
+              <button id="btnNewProfile" class="btn-ghost">New</button>
+              <button id="btnEditProfile" class="btn-ghost">Rename</button>
+              <button id="btnDeleteProfile" class="btn-ghost btn-danger">Delete</button>
+            </div>
+          </section>
+
+          <section class="section">
+            <label>Actions</label>
+            <button id="btnCapture" class="btn btn-outline">
+              <span class="btn-icon">◎</span> Capture Fields
+            </button>
+            <button id="btnAutoScan" class="btn btn-outline">
+              <span class="btn-icon">⌕</span> Auto Scan Fields
+            </button>
+            <button id="btnAutofill" class="btn btn-primary">
+              <span class="btn-icon">⚡</span> Autofill Data
+            </button>
+          </section>
+
+          <section class="section" id="fieldsSection">
+            <div class="fields-header">
+              <label style="margin:0">Captured Fields (<span id="fieldsCount">0</span>)</label>
+              <button id="btnToggleFields" class="btn-ghost" style="flex:0 0 auto;padding:4px 10px">View</button>
+            </div>
+            <div id="notFoundBanner" class="not-found-banner" hidden>
+              <div class="not-found-title">⚠ Not found on last Autofill</div>
+              <div id="notFoundList" class="not-found-list"></div>
+              <button id="btnCaptureMissing" class="btn-ghost" style="margin-top:6px">Capture Missing on Page</button>
+            </div>
+            <div id="fieldsList" class="fields-list" hidden></div>
+          </section>
+
+          <section class="section">
+            <label>Backup</label>
+            <div class="btn-row">
+              <button id="btnExport" class="btn-ghost">Export</button>
+              <button id="btnImport" class="btn-ghost">Import</button>
+            </div>
+            <div class="hint">Export downloads only the profile selected above. Import adds/overwrites that profile from a file (also accepts an older all-profiles export).</div>
+            <input type="file" id="importFile" accept=".json" hidden>
+          </section>
+
         </div>
-        <div class="target-field">
-          <label>Maximum ₹ (optional)</label>
-          <input type="number" id="maxShipping" min="0" step="1" placeholder="50">
+
+        <div id="panel-shipping" class="tab-panel" data-panel="shipping">
+
+          <div class="status status-row">
+            <span class="status-dot" id="statusDot"></span><span id="statusLabel">Ready</span>
+          </div>
+
+          <section class="section">
+            <label>Product Image</label>
+            <div class="upload-area" id="uploadArea">
+              <div class="upload-text">Click to upload <strong>PNG / JPG</strong></div>
+            </div>
+            <input type="file" id="fileInput" accept="image/png,image/jpeg">
+
+            <div class="preview-wrap" id="previewWrap">
+              <img id="previewImg" src="" alt="preview">
+              <div class="preview-info">
+                <div class="preview-name" id="previewName">image.jpg</div>
+                <div class="preview-size" id="previewSize">--</div>
+              </div>
+              <button class="btn-ghost change-btn" style="flex:0 0 auto;padding:6px 10px">Change</button>
+            </div>
+          </section>
+
+          <section class="section">
+            <label>Target Shipping</label>
+            <div class="target-row">
+              <div class="target-field">
+                <label>Minimum ₹</label>
+                <input type="number" id="minShipping" min="0" step="1" placeholder="40">
+              </div>
+              <div class="target-field">
+                <label>Maximum ₹ (optional)</label>
+                <input type="number" id="maxShipping" min="0" step="1" placeholder="50">
+              </div>
+            </div>
+            <div class="hint">Background, border, size, emoji and badge variations are generated and tested automatically until one lands in range.</div>
+          </section>
+
+          <section class="section">
+            <label>Actions</label>
+            <button id="generateBtn" class="btn btn-primary" disabled>
+              <span class="btn-icon">⚡</span> Generate &amp; Test
+            </button>
+            <button id="stopBtn" class="btn btn-stop">
+              <span class="btn-icon">◼</span> Stop Testing
+            </button>
+
+            <div class="progress-wrap" id="progressWrap">
+              <div class="progress-label">
+                <span id="progressText">Processing...</span>
+                <span id="progressCount">0 / 0</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            </div>
+
+            <div class="status-msg" id="statusMsg"></div>
+          </section>
+
+          <section class="results-section" id="resultsSection">
+            <div class="divider"></div>
+            <div class="results-header">
+              <label style="margin:0">Result</label>
+              <div class="badge">Target Match</div>
+            </div>
+            <div id="resultsGrid"></div>
+          </section>
+
         </div>
       </div>
-      <div class="hint">Background, border, size, emoji and badge variations are generated and tested automatically until one lands in range.</div>
-    </section>
 
-    <section class="section">
-      <label>Actions</label>
-      <button id="generateBtn" class="btn btn-primary" disabled>
-        <span class="btn-icon">⚡</span> Generate &amp; Test
-      </button>
-      <button id="stopBtn" class="btn btn-stop">
-        <span class="btn-icon">◼</span> Stop Testing
-      </button>
+    </div>
 
-      <div class="progress-wrap" id="progressWrap">
-        <div class="progress-label">
-          <span id="progressText">Processing...</span>
-          <span id="progressCount">0 / 0</span>
+    <div class="tab-panel" data-panel="flipkart">
+
+      <section class="section">
+        <label for="fkProfileSelect">Profile</label>
+        <select id="fkProfileSelect">
+          <option disabled selected>Choose a profile</option>
+        </select>
+        <div class="btn-row">
+          <button id="fkBtnNewProfile" class="btn-ghost">New</button>
+          <button id="fkBtnEditProfile" class="btn-ghost">Rename</button>
+          <button id="fkBtnDeleteProfile" class="btn-ghost btn-danger">Delete</button>
         </div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      </div>
+      </section>
 
-      <div class="status-msg" id="statusMsg"></div>
-    </section>
+      <section class="section">
+        <label>Actions</label>
+        <button id="fkBtnCapture" class="btn btn-outline">
+          <span class="btn-icon">◎</span> Capture Fields
+        </button>
+        <button id="fkBtnAutoScan" class="btn btn-outline">
+          <span class="btn-icon">⌕</span> Auto Scan Fields
+        </button>
+        <button id="fkBtnAutofill" class="btn btn-primary">
+          <span class="btn-icon">⚡</span> Autofill Data
+        </button>
+      </section>
 
-    <section class="results-section" id="resultsSection">
-      <div class="divider"></div>
-      <div class="results-header">
-        <label style="margin:0">Result</label>
-        <div class="badge">Target Match</div>
-      </div>
-      <div id="resultsGrid"></div>
-    </section>
+      <section class="section" id="fkFieldsSection">
+        <div class="fields-header">
+          <label style="margin:0">Captured Fields (<span id="fkFieldsCount">0</span>)</label>
+          <button id="fkBtnToggleFields" class="btn-ghost" style="flex:0 0 auto;padding:4px 10px">View</button>
+        </div>
+        <div id="fkNotFoundBanner" class="not-found-banner" hidden>
+          <div class="not-found-title">⚠ Not found on last Autofill</div>
+          <div id="fkNotFoundList" class="not-found-list"></div>
+          <button id="fkBtnCaptureMissing" class="btn-ghost" style="margin-top:6px">Capture Missing on Page</button>
+        </div>
+        <div id="fkFieldsList" class="fields-list" hidden></div>
+      </section>
+
+      <section class="section">
+        <label>Backup</label>
+        <div class="btn-row">
+          <button id="fkBtnExport" class="btn-ghost">Export</button>
+          <button id="fkBtnImport" class="btn-ghost">Import</button>
+        </div>
+        <div class="hint">Export downloads only the profile selected above. Import adds/overwrites that profile from a file (also accepts an older all-profiles export).</div>
+        <input type="file" id="fkImportFile" accept=".json" hidden>
+      </section>
+
+      <div class="hint" style="margin-top:2px">Flipkart Autofill uses the same generic capture/auto-scan/autofill engine as Meesho, unverified against Flipkart Seller Hub's real page markup yet - if a field doesn't get filled correctly, tell me what happened and we'll fix it the same way we fixed Meesho's price-field bug.</div>
+
+    </div>
 
   </div>
 
 </div>
 <script src="popup-autofill.js"></script>
 <script src="popup-shipping.js"></script>
+<script src="popup-flipkart.js"></script>
 <script src="tabs.js"></script>
 </body>
 </html>

@@ -1,10 +1,14 @@
-// ── Autofill: profile field storage ─────────────────────────────────────────
+// ── Autofill: profile field storage (shared by Meesho and Flipkart tools) ───
+// `store` selects which top-level storage key holds the profiles - Meesho's
+// popup omits it (defaults to "profiles"), Flipkart's popup passes
+// "flipkartProfiles", so the two marketplaces never share/clobber profiles.
 async function handleSaveField(e){
   try{
-    const {profileId,field}=e
+    const {profileId,field,store}=e
+    const storageKey=store||"profiles"
     if(!profileId||!field) return false
 
-    let data=(await chrome.storage.local.get(["profiles"])).profiles||{}
+    let data=(await chrome.storage.local.get([storageKey]))[storageKey]||{}
 
     if(!data[profileId]) return false
 
@@ -18,7 +22,7 @@ async function handleSaveField(e){
       data[profileId].fields.push(field)
     }
 
-    await chrome.storage.local.set({profiles:data})
+    await chrome.storage.local.set({[storageKey]:data})
 
     return true
   }

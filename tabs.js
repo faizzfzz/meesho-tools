@@ -1,28 +1,39 @@
+// Generic nested-tab controller. Each ".tab-group" owns exactly one direct-child
+// ".tabs" bar and its direct-child ".tab-panel" elements, matched by data-tab/data-panel.
+// Using :scope with "> " keeps a group from reaching into a nested group's own tabs/panels,
+// so the outer (marketplace) group and inner (tool) group can be toggled independently.
 document.addEventListener("DOMContentLoaded", () => {
-  const tabButtons = document.querySelectorAll(".tab-btn")
-  const panels = {
-    autofill: document.getElementById("panel-autofill"),
-    shipping: document.getElementById("panel-shipping")
-  }
 
-  function activateTab(name){
-    if(!panels[name]) return
-    tabButtons.forEach(b => b.classList.toggle("active", b.dataset.tab === name))
-    Object.entries(panels).forEach(([key, el]) => el.classList.toggle("active", key === name))
-  }
+const hasStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local
 
-  const hasStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local
+document.querySelectorAll(".tab-group").forEach(group => {
 
-  tabButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      activateTab(btn.dataset.tab)
-      if(hasStorage) chrome.storage.local.set({ activeMeeshoTab: btn.dataset.tab })
-    })
-  })
+const tabsBar = group.querySelector(":scope > .tabs")
+if(!tabsBar) return
 
-  if(hasStorage){
-    chrome.storage.local.get(["activeMeeshoTab"], (data) => {
-      if(data && data.activeMeeshoTab) activateTab(data.activeMeeshoTab)
-    })
-  }
+const buttons = tabsBar.querySelectorAll(":scope > .tab-btn")
+const panels = group.querySelectorAll(":scope > .tab-panel")
+const storageKey = "activeTab::" + (group.id || "default")
+
+function activate(name){
+if(!name) return
+buttons.forEach(b => b.classList.toggle("active", b.dataset.tab === name))
+panels.forEach(p => p.classList.toggle("active", p.dataset.panel === name))
+}
+
+buttons.forEach(btn => {
+btn.addEventListener("click", () => {
+activate(btn.dataset.tab)
+if(hasStorage) chrome.storage.local.set({ [storageKey]: btn.dataset.tab })
+})
+})
+
+if(hasStorage){
+chrome.storage.local.get([storageKey], (data) => {
+if(data && data[storageKey]) activate(data[storageKey])
+})
+}
+
+})
+
 })
