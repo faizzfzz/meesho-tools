@@ -460,11 +460,15 @@ URL.revokeObjectURL(url)
 /* IMPORT - opens a full tab, because Chrome closes an extension popup as soon as a
    native file picker opens, so a file input inside the popup can never deliver its file */
 
-btnImport.onclick = () => {
+btnImport.onclick = async () => {
 
 const url = chrome.runtime.getURL("import.html") + "?store=" + STORAGE_KEY + "&profile=" + encodeURIComponent(profileSelect.value || "")
 
-chrome.tabs.create({ url })
+try{
+await chrome.tabs.create({ url })
+}catch(err){
+alert("Could not open the import page: " + err.message)
+}
 
 }
 
