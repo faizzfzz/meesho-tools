@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html class="wide">
+<head>
+<meta charset="UTF-8">
+<title>Import Profile</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="wide">
+<div class="card import-card">
+
+  <header class="app-header">
+    <h1 id="importTitle">Import profile</h1>
+  </header>
+
+  <section class="section">
+    <label>Profile file (.json)</label>
+    <button id="btnChoose" type="button" class="btn btn-outline">Choose file…</button>
+    <input type="file" id="importFile" accept=".json,application/json">
+    <div class="hint" id="fileName">No file chosen.</div>
+  </section>
+
+  <section class="section" id="targetSection" hidden>
+    <label for="targetSelect">Import into</label>
+    <select id="targetSelect"></select>
+    <div class="hint" id="targetHint"></div>
+  </section>
+
+  <section class="section">
+    <button id="btnDoImport" type="button" class="btn btn-primary" disabled>Import</button>
+    <div class="status-msg" id="importStatus"></div>
+  </section>
+
+</div>
+<script src="import-logic.js"></script>
+<script src="import.js"></script>
+</body>
+</html>

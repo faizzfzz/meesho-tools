@@ -13,7 +13,6 @@ const btnAutofill = document.getElementById("fkBtnAutofill")
 
 const btnExport = document.getElementById("fkBtnExport")
 const btnImport = document.getElementById("fkBtnImport")
-const importFile = document.getElementById("fkImportFile")
 
 const fieldsCountEl = document.getElementById("fkFieldsCount")
 const btnToggleFields = document.getElementById("fkBtnToggleFields")
@@ -458,60 +457,16 @@ URL.revokeObjectURL(url)
 
 }
 
-/* IMPORT (accepts a single-profile export, a multi-profile export, or a bare {name,fields} object) */
+/* IMPORT - opens a full tab, because Chrome closes an extension popup as soon as a
+   native file picker opens, so a file input inside the popup can never deliver its file */
 
 btnImport.onclick = () => {
 
-importFile.click()
+const url = chrome.runtime.getURL("import.html") + "?store=" + STORAGE_KEY + "&profile=" + encodeURIComponent(profileSelect.value || "")
+
+chrome.tabs.create({ url })
 
 }
-
-function isProfileShape(p){
-return !!p && typeof p === "object" && typeof p.name === "string" && Array.isArray(p.fields)
-}
-
-importFile.addEventListener("change", (e)=>{
-
-const file = e.target.files[0]
-
-e.target.value = ""
-
-if(!file) return
-
-const reader = new FileReader()
-
-reader.onload = async (event)=>{
-
-try{
-
-const imported = JSON.parse(event.target.result)
-
-if(isProfileShape(imported)){
-const id = "fkprofile_" + Date.now()
-profiles[id] = imported
-}else if(imported && typeof imported === "object" && !Array.isArray(imported) && Object.keys(imported).length > 0 && Object.values(imported).every(isProfileShape)){
-Object.assign(profiles, imported)
-}else{
-throw new Error("Unrecognized file format")
-}
-
-await chrome.storage.local.set({[STORAGE_KEY]:profiles})
-
-alert("Profile imported successfully")
-
-loadProfiles()
-
-}catch{
-
-alert("Invalid file")
-
-}
-
-}
-
-reader.readAsText(file)
-
-})
 
 loadProfiles()
 

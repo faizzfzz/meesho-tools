@@ -25,3 +25,4 @@ A Chrome (Manifest V3) extension covering two marketplaces behind one tabbed pop
 - `flipkart-content.js` — Flipkart content script (generic engine, `FK_`-prefixed messages so it never responds to a Meesho-tab message or vice versa)
 - `popup.html`, `styles.css`, `tabs.js` — shared popup shell and nested tab switching (`tabs.js` handles any number of independent `.tab-group` wrappers)
 - `popup-autofill.js`, `popup-shipping.js`, `popup-flipkart.js` — per-tool popup logic
+- `import.html`, `import.js`, `import-logic.js` — profile import, opened in a full tab from either Autofill tab's Import button (a file picker inside the popup can't be relied on). Lets you merge a file into an existing profile or add it as a new one; `import-logic.js` is dependency-free so it can be tested with plain node
