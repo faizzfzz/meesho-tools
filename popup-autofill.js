@@ -61,6 +61,7 @@ renderNotFoundReport()
 
 function labelForField(field){
 const selector = field.selector || ""
+if(selector === "@sizes") return "Sizes"
 const sm = selector.match(/^SIZE:(.+?)::/)
 const m = selector.match(/id=["']([^"']+)["']/) || selector.match(/#([a-zA-Z0-9_-]+)/)
 if(m) return sm ? `${m[1]} · ${sm[1]}` : m[1]
