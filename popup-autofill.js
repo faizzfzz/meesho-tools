@@ -61,12 +61,10 @@ renderNotFoundReport()
 
 function labelForField(field){
 const selector = field.selector || ""
-const m = selector.match(/id=["']([^"']+)["']/) || selector.match(/#([a-zA-Z0-9_-]+)/)
-if(m) return m[1]
-if(selector.startsWith("SIZE:")){
 const sm = selector.match(/^SIZE:(.+?)::/)
+const m = selector.match(/id=["']([^"']+)["']/) || selector.match(/#([a-zA-Z0-9_-]+)/)
+if(m) return sm ? `${m[1]} · ${sm[1]}` : m[1]
 if(sm) return `Size "${sm[1]}"`
-}
 return selector.length > 36 ? selector.slice(0,33) + "..." : selector
 }
 
