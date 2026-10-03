@@ -184,7 +184,7 @@ return
 notFoundListEl.innerHTML = ""
 report.notFound.forEach(field => {
 const row = document.createElement("div")
-row.textContent = "• " + labelForField(field) + " (" + field.value + ")"
+row.textContent = "• " + labelForField(field) + " (" + field.value + ")" + (field.note ? " - " + field.note : "")
 notFoundListEl.appendChild(row)
 })
 
