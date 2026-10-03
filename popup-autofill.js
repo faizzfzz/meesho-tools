@@ -176,17 +176,42 @@ const key = "autofillReport_" + id
 const data = await chrome.storage.local.get([key])
 const report = data[key]
 
-if(!report || !report.notFound || report.notFound.length === 0){
+// Reports from before this split only have "notFound" - treat those as absent fields.
+const failed = report && report.failed ? report.failed : []
+const absent = report && report.absent ? report.absent : (report && !report.failed ? (report.notFound || []) : [])
+
+if(failed.length === 0 && absent.length === 0){
 notFoundBanner.hidden = true
 return
 }
 
+const titleEl = document.getElementById("notFoundTitle")
+// Red = the field is on the page but the value didn't take. Muted = the field simply isn't
+// on this dashboard layout, which is expected and was skipped without waiting.
+notFoundBanner.classList.toggle("info", failed.length === 0)
+if(titleEl) titleEl.textContent = failed.length ? "\u26a0 Couldn't fill " + failed.length + " field(s)" : "\u2139 Skipped fields"
+
 notFoundListEl.innerHTML = ""
-report.notFound.forEach(field => {
+
+failed.forEach(field => {
 const row = document.createElement("div")
-row.textContent = "• " + labelForField(field) + " (" + field.value + ")" + (field.note ? " - " + field.note : "")
+row.textContent = "\u2715 " + labelForField(field) + " (" + field.value + ")" + (field.note ? " - " + field.note : "")
 notFoundListEl.appendChild(row)
 })
+
+if(absent.length){
+const details = document.createElement("details")
+details.className = "absent-details"
+const summary = document.createElement("summary")
+summary.textContent = absent.length + " saved field(s) not on this page - skipped"
+details.appendChild(summary)
+absent.forEach(field => {
+const row = document.createElement("div")
+row.textContent = "\u2022 " + labelForField(field) + " (" + field.value + ")"
+details.appendChild(row)
+})
+notFoundListEl.appendChild(details)
+}
 
 notFoundBanner.hidden = false
 

@@ -178,3 +178,9 @@ input[type="file"]{display:none}
 html.wide,body.wide{width:auto}
 body.wide{padding:24px 16px}
 body.wide .import-card{max-width:440px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:14px}
+
+/* Skipped-because-absent is informational, not an error */
+.not-found-banner.info{background:var(--panel);border-color:var(--border)}
+.not-found-banner.info .not-found-title{color:var(--text-muted)}
+.absent-details{margin-top:6px;color:var(--text-muted);font-size:11px}
+.absent-details summary{cursor:pointer}

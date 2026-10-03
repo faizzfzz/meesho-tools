@@ -80,12 +80,16 @@ async function applySizes(wanted){
   return {ok:false,notOffered,reason:"Timed out waiting for the size rows to appear"};
 }
 
-// fillField swallows nothing itself, but callers used to ignore both thrown errors and
-// writes that silently didn't take, so a field could vanish from the report. This fills,
-// then checks the value actually landed.
+// Fills one field and checks the value actually landed (a page can revert or reject a
+// write; previously that vanished from the report). Capped so one stuck dropdown can't
+// hold the whole run open.
 async function fillAndVerify(el,value){
   if(el.disabled) return {ok:false,skip:true};
-  try{ await fillField(el,value); }catch(e){ return {ok:false,note:"error: "+((e&&e.message)||e)}; }
+  try{
+    const p=fillField(el,value);
+    p.catch(()=>{});
+    await Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("timed out")),10000))]);
+  }catch(e){ return {ok:false,note:"error: "+((e&&e.message)||e)}; }
   await new Promise(r=>setTimeout(r,200));
   const now=(el.value||"").trim(),want=String(value).trim();
   if(now===want) return {ok:true};
@@ -94,15 +98,63 @@ async function fillAndVerify(el,value){
   return {ok:false,note:now?"page kept \""+now+"\"":"value didn't stick"};
 }
 
-async function autofillProfile(profileData,profileId){
-  if(!profileData||!profileData.fields) return;
-  if(isAutofilling) return void showToast("Autofill already running!",!0);
-  isAutofilling=!0,shouldStopAutofill=!1,showStopAutofillButton();
+const SIZE_AWARE_IDS=["meesho_price","only_wrong_return_price","product_mrp","inventory","supplier_gst_percent","hsn_code","product_weight_in_gms","supplier_product_id","product_name","color"];
+const COPY_TO_ALL_IDS=["meesho_price","only_wrong_return_price","product_mrp","inventory"];
 
+// Finds a saved field's element on the page RIGHT NOW. It never waits: whether a field
+// exists is a question about the page as it is, and waiting on every absent field was
+// what made runs drag on. Returns {el, key} (key = dedupe key to mark once handled),
+// {dup:true} if an equivalent field was already handled, or {el:null} if absent.
+function resolveField(field,ctx){
+  try{
+    const selector=field.selector;
+    const m=selector.match(/id=["']([^"']+)["']/)||selector.match(/#([a-zA-Z0-9_-]+)/);
+    const idMatch=m?m[1]:null;
+    if(idMatch&&SIZE_AWARE_IDS.includes(idMatch)){
+      // With "copy to all sizes" on, one write propagates to every row, so dedupe by id.
+      // Otherwise each size row has its own selector (SIZE:M::#meesho_price vs SIZE:L::...)
+      // sharing one duplicated DOM id, so dedupe per selector.
+      const copying=ctx.copyToAllSizes&&COPY_TO_ALL_IDS.includes(idMatch);
+      const key=copying?idMatch:selector;
+      if(ctx.filledKeys.has(key)) return {dup:true};
+      let el=null;
+      if(copying){
+        const rows=document.querySelectorAll(".css-1hw3sau");
+        el=rows.length?rows[0].querySelector(`input[id="${idMatch}"]`):null;
+      }else{
+        el=parseAndQuerySelector(selector);
+      }
+      return {el,key};
+    }
+    return {el:parseAndQuerySelector(selector),key:null};
+  }catch(e){
+    return {el:null,key:null};
+  }
+}
+
+// Waits until the page stops changing (or a short cap), once, so a section that is still
+// mounting isn't mistaken for an absent one. Not per-field.
+function settlePage(quiet=250,max=1200){
+  return new Promise(resolve=>{
+    let timer,cap,finished=false;
+    const obs=new MutationObserver(()=>{ clearTimeout(timer); timer=setTimeout(finish,quiet); });
+    function finish(){ if(finished) return; finished=true; obs.disconnect(); clearTimeout(timer); clearTimeout(cap); resolve(); }
+    obs.observe(document.body,{childList:true,subtree:true});
+    timer=setTimeout(finish,quiet);
+    cap=setTimeout(finish,max);
+  });
+}
+
+function setAutofillStatus(text){
+  if(stopAutofillButton) stopAutofillButton.innerText="\u2b1b STOP AUTOFILL"+(text?" ("+text+")":"");
+}
+
+async function runAutofill(profileData,profileId){
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   let filledCount=0,skippedCount=0;
-  const notFound=[];
-  const missing=[];
-  let fields=profileData.fields;
+  const failed=[];   // field exists but the value didn't take - worth attention
+  let absent=[];     // field isn't on this page (different dashboard layout) - just skipped
+  let fields=profileData.fields.filter(f=>f&&typeof f.selector==="string");
 
   // Sizes first: the per-size rows and the "copy to all sizes" checkbox don't exist until
   // sizes are chosen and applied.
@@ -120,11 +172,12 @@ async function autofillProfile(profileData,profileId){
       if(!legacyNotSizes){
         fields=fields.filter((_,i)=>i!==sizeIdx);
         if(res.ok){ res.skipped?skippedCount++:filledCount++; }
-        else{ skippedCount++; notFound.push({selector:entry.selector,type:entry.type,value:entry.value}); showToast("Sizes: "+res.reason,!0); }
+        else{ skippedCount++; failed.push({selector:entry.selector,type:entry.type,value:entry.value,note:res.reason}); showToast("Sizes: "+res.reason,!0); }
         if(res.notOffered&&res.notOffered.length) showToast("Size not offered here: "+res.notOffered.join(", "),!0);
       }
     }
   }
+
 
   let copyToAllSizes=!1;
   try{
@@ -138,94 +191,78 @@ async function autofillProfile(profileData,profileId){
     }
   }catch(e){}
 
-  const sizeAwareIds=["meesho_price","only_wrong_return_price","product_mrp","inventory","supplier_gst_percent","hsn_code","product_weight_in_gms","supplier_product_id","product_name","color"];
-  const filledIds=new Set();
+  const ctx={copyToAllSizes,filledKeys:new Set()};
+  let pending=fields.slice();
+  const total=pending.length;
+  let handled=0;
 
-  for(const field of fields){
-    if(shouldStopAutofill){
-      showToast(`STOPPED! Filled: ${filledCount}, Skipped: ${skippedCount}`);
-      break;
-    }
-    const selector=field.selector,value=field.value;
-    let idMatch=null;
-    const m=selector.match(/id=["']([^"']+)["']/)||selector.match(/#([a-zA-Z0-9_-]+)/);
-    m&&(idMatch=m[1]);
-    let el=null;
-    if(idMatch&&sizeAwareIds.includes(idMatch)){
-      const copyingThisId=copyToAllSizes&&["meesho_price","only_wrong_return_price","product_mrp","inventory"].includes(idMatch);
-      // When "copy to all sizes" is on, Meesho propagates one write across every row for
-      // this id, so dedupe by id alone. Otherwise each size row has its own selector
-      // (e.g. "SIZE:M::#meesho_price" vs "SIZE:L::#meesho_price") sharing the same
-      // duplicated DOM id, so dedupe per-selector or every row after the first gets
-      // skipped as "already filled".
-      const dedupeKey=copyingThisId?idMatch:selector;
-      if(filledIds.has(dedupeKey)){ skippedCount++; continue; }
-      if(copyingThisId){
-        const rows=document.querySelectorAll(".css-1hw3sau");
-        rows.length>0&&(el=rows[0].querySelector(`input[id="${idMatch}"]`),el&&filledIds.add(dedupeKey));
-      }else{
-        // parseAndQuerySelector/waitForElement already understand the "SIZE:label::selector"
-        // format and scope the lookup to that size row's own container, which is required
-        // here since Meesho reuses the same id across every size row's input.
-        el=parseAndQuerySelector(selector)||await waitForElement(selector);
-        el&&filledIds.add(dedupeKey);
-      }
-    }else{
-      el=parseAndQuerySelector(selector)||await waitForElement(selector);
-    }
+  // If some saved fields aren't on the page yet, let a still-mounting page finish once.
+  if(pending.some(f=>{const r=resolveField(f,ctx);return !r.el&&!r.dup;})){
+    setAutofillStatus("checking page");
+    await settlePage();
+  }
 
-    if(el){
+  // A few quick passes: filling a field can reveal others (Packaging Type -> Unit, sizes ->
+  // rows), so re-check what was missing. A pass that finds nothing new ends the run -
+  // fields that never appear are simply skipped, never waited on.
+  for(let pass=0;pass<4&&pending.length&&!shouldStopAutofill;pass++){
+    const stillPending=[];
+    let found=0;
+    for(const field of pending){
+      if(shouldStopAutofill) break;
+      const r=resolveField(field,ctx);
+      if(r.dup){ skippedCount++; handled++; found++; continue; }
+      if(!r.el){ stillPending.push(field); continue; }
+      found++; handled++;
+      if(r.key) ctx.filledKeys.add(r.key);
+      setAutofillStatus(handled+"/"+total);
+      const el=r.el,value=String(field.value==null?"":field.value);
       const current=el.value?el.value.trim():"";
-      if(current===value.trim()){
-        showSkipEffect(el); skippedCount++; await new Promise(r=>setTimeout(r,100)); continue;
-      }
-      if(current&&!isDropdown(el)&&"SELECT"!==el.tagName){
-        showSkipEffect(el); skippedCount++; await new Promise(r=>setTimeout(r,100)); continue;
+      if(current===value.trim()||(current&&!isDropdown(el)&&"SELECT"!==el.tagName)){
+        showSkipEffect(el); skippedCount++; await sleep(30); continue;
       }
       const res=await fillAndVerify(el,value);
-      if(res.ok){ showFillEffect(el); filledCount++; await new Promise(r=>setTimeout(r,150)); }
+      if(res.ok){ showFillEffect(el); filledCount++; await sleep(150); }
       else if(res.skip){ showSkipEffect(el); skippedCount++; }
-      else{ showNotFoundEffect(selector); skippedCount++; notFound.push({selector:field.selector,type:field.type,value:field.value,note:res.note}); }
-    }else{
-      showNotFoundEffect(selector); skippedCount++;
-      notFound.push({selector:field.selector,type:field.type,value:field.value});
-      missing.push(field);
+      else{ skippedCount++; failed.push({selector:field.selector,type:field.type,value:field.value,note:res.note}); }
     }
+    pending=pending.filter(f=>stillPending.includes(f));
+    if(!found||shouldStopAutofill) break;
+    if(pending.length) await sleep(250); // let anything the last fills revealed finish mounting
   }
 
-  // Some sections mount after the rest of the form (e.g. A/B-tested ones), and the per-field
-  // lookup above only waits ~300ms. Give everything not found one shared window to appear,
-  // rather than waiting on each field separately.
-  if(missing.length&&!shouldStopAutofill){
-    showToast("Waiting for "+missing.length+" field(s) that haven't loaded yet...");
-    const deadline=Date.now()+3000;
-    let pending=missing.slice();
-    while(pending.length&&Date.now()<deadline&&!shouldStopAutofill){
-      for(const f of pending.slice()){
-        const el=parseAndQuerySelector(f.selector);
-        if(!el) continue;
-        pending=pending.filter(x=>x!==f);
-        const k=notFound.findIndex(n=>n.selector===f.selector);
-        k>-1&&notFound.splice(k,1);
-        skippedCount--;
-        const current=el.value?el.value.trim():"";
-        if(current===String(f.value).trim()||(current&&!isDropdown(el)&&"SELECT"!==el.tagName)){ showSkipEffect(el); skippedCount++; continue; }
-        const res=await fillAndVerify(el,f.value);
-        if(res.ok){ showFillEffect(el); filledCount++; await new Promise(r=>setTimeout(r,150)); }
-        else if(res.skip){ showSkipEffect(el); skippedCount++; }
-        else{ skippedCount++; notFound.push({selector:f.selector,type:f.type,value:f.value,note:res.note}); }
-      }
-      if(pending.length) await new Promise(r=>setTimeout(r,150));
-    }
-  }
+  absent=pending;
+  skippedCount+=absent.length;
 
-  if(!shouldStopAutofill) showToast(`Done! Filled: ${filledCount}, Skipped: ${skippedCount}`);
-  isAutofilling=!1,shouldStopAutofill=!1,hideStopAutofillButton();
+  if(shouldStopAutofill){
+    showToast(`STOPPED! Filled: ${filledCount}, Skipped: ${skippedCount}`);
+  }else{
+    let msg=`Done! Filled: ${filledCount}, Skipped: ${skippedCount}`;
+    if(absent.length) msg+=` (${absent.length} not on this page)`;
+    if(failed.length) msg+=` - ${failed.length} couldn't be filled, see the popup`;
+    showToast(msg,failed.length>0);
+  }
 
   if(profileId){
     try{
-      await chrome.storage.local.set({["autofillReport_"+profileId]:{filled:filledCount,skipped:skippedCount,notFound,ts:Date.now()}});
+      const strip=f=>({selector:f.selector,type:f.type,value:f.value,note:f.note});
+      await chrome.storage.local.set({["autofillReport_"+profileId]:{filled:filledCount,skipped:skippedCount,failed:failed.map(strip),absent:absent.map(strip),notFound:failed.concat(absent).map(strip),ts:Date.now()}});
     }catch(e){}
+  }
+}
+
+async function autofillProfile(profileData,profileId){
+  if(!profileData||!profileData.fields) return;
+  if(isAutofilling) return void showToast("Autofill already running!",!0);
+  isAutofilling=!0,shouldStopAutofill=!1,showStopAutofillButton(),setAutofillStatus("");
+  try{
+    await runAutofill(profileData,profileId);
+  }catch(e){
+    console.error("[Meesho Autofill]",e);
+    showToast("Autofill stopped on an error: "+((e&&e.message)||e),!0);
+  }finally{
+    // Always release: a thrown error used to leave Autofill stuck "running" with the stop button up.
+    isAutofilling=!1,shouldStopAutofill=!1,hideStopAutofillButton();
   }
 }
 
