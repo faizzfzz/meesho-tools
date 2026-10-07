@@ -478,6 +478,10 @@ alert("Could not open the import page: " + err.message)
 
 }
 
+/* BACKUP & SYNC - every profile, both marketplaces, in one place */
+
+document.getElementById("btnBackupAll").onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL("backup.html") })
+
 loadProfiles()
 
 })

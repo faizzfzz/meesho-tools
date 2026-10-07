@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html class="wide">
+<head>
+<meta charset="UTF-8">
+<title>Backup &amp; sync</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="wide">
+<div class="card import-card">
+
+  <header class="app-header">
+    <h1>Backup &amp; sync (all profiles)</h1>
+  </header>
+
+  <section class="section">
+    <label>Export everything</label>
+    <button id="btnExportAll" type="button" class="btn btn-primary">Download all profiles (.zip)</button>
+    <div class="hint" id="exportInfo"></div>
+    <div class="hint">One .json file per profile, in a <b>meesho</b> and a <b>flipkart</b> folder. To keep them on GitHub, unzip into your data repo and commit.</div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section class="section">
+    <label>Import / restore</label>
+    <button id="btnPickFolder" type="button" class="btn btn-outline">Choose a folder…</button>
+    <button id="btnPickFiles" type="button" class="btn btn-outline">Choose .json files…</button>
+    <input type="file" id="folderInput" webkitdirectory multiple>
+    <input type="file" id="filesInput" accept=".json,application/json" multiple>
+    <div class="hint" id="importInfo">Pick the folder you unzipped or cloned (it can hold <b>meesho</b> and <b>flipkart</b> subfolders), or select profile files directly. Profiles are matched by name, so importing the same profile again updates it instead of adding a copy.</div>
+    <label class="inline-check" for="replaceMode"><input type="checkbox" id="replaceMode"> Replace matching profiles so they match the files exactly (default: merge, keeping fields that only exist here)</label>
+    <div class="hint" id="preview"></div>
+  </section>
+
+  <section class="section">
+    <button id="btnDoImport" type="button" class="btn btn-primary" disabled>Import</button>
+    <div class="status-msg" id="status"></div>
+  </section>
+
+</div>
+<script src="import-logic.js"></script>
+<script src="zip-logic.js"></script>
+<script src="backup-logic.js"></script>
+<script src="backup.js"></script>
+</body>
+</html>

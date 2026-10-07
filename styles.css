@@ -184,3 +184,7 @@ body.wide .import-card{max-width:440px;margin:0 auto;background:var(--card);bord
 .not-found-banner.info .not-found-title{color:var(--text-muted)}
 .absent-details{margin-top:6px;color:var(--text-muted);font-size:11px}
 .absent-details summary{cursor:pointer}
+
+/* Checkbox row on standalone pages */
+label.inline-check{display:flex;align-items:flex-start;gap:8px;text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:500;color:var(--text);margin:12px 0 0;cursor:pointer}
+label.inline-check input{margin-top:2px;flex:none}
